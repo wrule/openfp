@@ -73,15 +73,26 @@ async function openfp(browserPath: string) {
 
   const browser = await puppeteer.launch(launchOptions);
 
-  // 浏览器关闭监测
-  const timer = setInterval(async () => {
-    const pages = await browser.pages();
-    if (pages.length < 1) {
-      clearInterval(timer);
-      await browser.close();
-      process.exit(0);
-    }
-  }, 100);
+  const clearPluginPages = async (count = 200) => {
+    try {
+      const pages = (await browser.pages()).slice(1);
+      await Promise.all(pages.map((page) => page.close()));
+    } catch (e) { }
+    if (count) setTimeout(() => clearPluginPages(--count), 10);
+  };
+  clearPluginPages();
+
+  const browserMonitoring = async () => {
+    try {
+      const pages = await browser.pages();
+      if (pages.length < 1) {
+        await browser.close();
+        process.exit(0);
+      }
+    } catch (e) { }
+    setTimeout(() => browserMonitoring(), 100);
+  };
+  browserMonitoring();
 
   return browser;
 }
