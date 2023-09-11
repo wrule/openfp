@@ -1,7 +1,7 @@
 import openfp from '.';
 
 function dev() {
-  openfp('./browser/1');
+  console.log(1234);
 }
 
 dev();

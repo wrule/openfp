@@ -2,6 +2,7 @@
   "name": "openfp",
   "version": "0.1.0",
   "main": "dist/index.js",
+  "bin": "dist/dev.js",
   "scripts": {
     "build": "tsc",
     "pack": "script/pack.sh",
