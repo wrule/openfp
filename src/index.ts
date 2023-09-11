@@ -49,6 +49,10 @@ async function openfp(browserPath: string) {
 
   const userLaunchOptions = loadJson(launchOptionsPath);
   if (!userLaunchOptions.executablePath) {
+    fs.writeFileSync(launchOptionsPath, JSON.stringify({
+      executablePath: '',
+    }, null, 2));
+    console.log(`please enter executablePath in ${launchOptionsPath}`);
     return;
   }
   const launchOptions = merge({
