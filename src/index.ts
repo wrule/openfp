@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import puppeteer from 'puppeteer-core';
 
 export
 function merge(obj1: any, obj2: any) {
@@ -41,11 +42,39 @@ function getAllSubDirPath(dirPath: string) {
 }
 
 export default
-function openfp(browserPath: string) {
+async function openfp(browserPath: string) {
   checkDir(browserPath);
   const userPath = checkDir(path.join(browserPath, 'user'));
   const pluginsPath = checkDir(path.join(browserPath, 'plugins'));
   const fingerprintPath = path.join(browserPath, 'fingerprint.json');
   const launchOptionsPath = path.join(browserPath, 'launchOptions.json');
   const pluginsDirs = getAllSubDirPath(pluginsPath).join(',');
+
+  const launchOptions = merge({
+    headless: false,
+    defaultViewport: null,
+    args: [
+      '--disable-infobars',
+      '--no-default-browser-check',
+      `--load-extension=${pluginsDirs}`,
+      `--disable-extensions-except=${pluginsDirs}`,
+    ],
+    ignoreDefaultArgs: [
+      '--enable-automation',
+      '--enable-blink-features=IdleDetection',
+    ],
+    userDataDir: userPath,
+  }, loadJson(launchOptionsPath));
+
+  const browser = await puppeteer.launch(launchOptions);
+
+  setInterval(async () => {
+    const pages = await browser.pages();
+    if (pages.length < 1) {
+      await browser.close();
+      process.exit(0);
+    }
+  }, 100);
+
+  return browser;
 }
