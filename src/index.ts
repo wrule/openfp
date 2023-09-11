@@ -28,9 +28,7 @@ function loadJson(filePath: string) {
   try {
     const jsonText = fs.readFileSync(filePath).toString();
     return JSON.parse(jsonText);
-  } catch (e) {
-    console.log(e);
-  }
+  } catch (e) { }
   return { };
 }
 
@@ -49,6 +47,10 @@ async function openfp(browserPath: string) {
   const launchOptionsPath = path.join(browserPath, 'launchOptions.json');
   const pluginsDirs = getAllSubDirPath(pluginsPath).join(',');
 
+  const userLaunchOptions = loadJson(launchOptionsPath);
+  if (!userLaunchOptions.executablePath) {
+    return;
+  }
   const launchOptions = merge({
     headless: false,
     defaultViewport: null,
@@ -63,7 +65,7 @@ async function openfp(browserPath: string) {
       '--enable-blink-features=IdleDetection',
     ],
     userDataDir: userPath,
-  }, loadJson(launchOptionsPath));
+  }, userLaunchOptions);
 
   const browser = await puppeteer.launch(launchOptions);
 

@@ -1,7 +1,7 @@
-import { hello } from '.';
+import openfp from '.';
 
 function dev() {
-  hello();
+  openfp('./browser/1');
 }
 
 dev();
