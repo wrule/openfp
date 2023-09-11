@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import openfp from '.';
 
 function dev() {
