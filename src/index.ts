@@ -41,58 +41,64 @@ function getAllSubDirPath(dirPath: string) {
 
 export default
 async function openfp(browserPath: string) {
-  const userPath = checkDir(path.join(browserPath, 'user'));
-  const pluginsPath = checkDir(path.join(browserPath, 'plugins'));
-  const fingerprintPath = path.join(browserPath, 'fingerprint.json');
-  const launchOptionsPath = path.join(browserPath, 'launchOptions.json');
-  const pluginsDirs = getAllSubDirPath(pluginsPath).join(',');
-
-  const userLaunchOptions = loadJson(launchOptionsPath);
-  if (!userLaunchOptions.executablePath) {
-    fs.writeFileSync(launchOptionsPath, JSON.stringify({
-      executablePath: '',
-    }, null, 2));
-    console.log(`please enter executablePath in ${launchOptionsPath}`);
-    return;
+  try {
+    const userPath = checkDir(path.join(browserPath, 'user'));
+    const pluginsPath = checkDir(path.join(browserPath, 'plugins'));
+    const fingerprintPath = path.join(browserPath, 'fingerprint.json');
+    const launchOptionsPath = path.join(browserPath, 'launchOptions.json');
+    const pluginsDirs = getAllSubDirPath(pluginsPath).join(',');
+  
+    const userLaunchOptions = loadJson(launchOptionsPath);
+    if (!userLaunchOptions.executablePath) {
+      fs.writeFileSync(launchOptionsPath, JSON.stringify({
+        executablePath: '',
+      }, null, 2));
+      const message = `please enter executablePath in ${launchOptionsPath}`;
+      console.log(message);
+      return { success: false, message };
+    }
+    const launchOptions = merge({
+      headless: false,
+      defaultViewport: null,
+      args: [
+        '--disable-infobars',
+        '--no-default-browser-check',
+        `--load-extension=${pluginsDirs}`,
+        `--disable-extensions-except=${pluginsDirs}`,
+      ],
+      ignoreDefaultArgs: [
+        '--enable-automation',
+        '--enable-blink-features=IdleDetection',
+      ],
+      userDataDir: userPath,
+    }, userLaunchOptions);
+  
+    const browser = await puppeteer.launch(launchOptions);
+  
+    const clearPluginPages = async (count = 200) => {
+      try {
+        const pages = (await browser.pages()).slice(1);
+        await Promise.all(pages.map((page) => page.close()));
+      } catch (e) { }
+      if (count) setTimeout(() => clearPluginPages(--count), 10);
+    };
+    clearPluginPages();
+  
+    const browserMonitoring = async () => {
+      try {
+        const pages = await browser.pages();
+        if (pages.length < 1) {
+          await browser.close();
+          process.exit(0);
+        }
+      } catch (e) { }
+      setTimeout(() => browserMonitoring(), 100);
+    };
+    browserMonitoring();
+  
+    return { success: true, browser };
+  } catch (err: any) {
+    console.error(err);
+    return { success: false, message: err.toString() };
   }
-  const launchOptions = merge({
-    headless: false,
-    defaultViewport: null,
-    args: [
-      '--disable-infobars',
-      '--no-default-browser-check',
-      `--load-extension=${pluginsDirs}`,
-      `--disable-extensions-except=${pluginsDirs}`,
-    ],
-    ignoreDefaultArgs: [
-      '--enable-automation',
-      '--enable-blink-features=IdleDetection',
-    ],
-    userDataDir: userPath,
-  }, userLaunchOptions);
-
-  const browser = await puppeteer.launch(launchOptions);
-
-  const clearPluginPages = async (count = 200) => {
-    try {
-      const pages = (await browser.pages()).slice(1);
-      await Promise.all(pages.map((page) => page.close()));
-    } catch (e) { }
-    if (count) setTimeout(() => clearPluginPages(--count), 10);
-  };
-  clearPluginPages();
-
-  const browserMonitoring = async () => {
-    try {
-      const pages = await browser.pages();
-      if (pages.length < 1) {
-        await browser.close();
-        process.exit(0);
-      }
-    } catch (e) { }
-    setTimeout(() => browserMonitoring(), 100);
-  };
-  browserMonitoring();
-
-  return browser;
 }
