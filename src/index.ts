@@ -43,7 +43,6 @@ function getAllSubDirPath(dirPath: string) {
 
 export default
 async function openfp(browserPath: string) {
-  checkDir(browserPath);
   const userPath = checkDir(path.join(browserPath, 'user'));
   const pluginsPath = checkDir(path.join(browserPath, 'plugins'));
   const fingerprintPath = path.join(browserPath, 'fingerprint.json');
