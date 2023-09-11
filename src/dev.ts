@@ -2,7 +2,7 @@
 import openfp from '.';
 
 function dev() {
-  console.log(1234, process.argv);
+  openfp(process.argv[2]);
 }
 
 dev();
