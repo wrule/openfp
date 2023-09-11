@@ -68,9 +68,11 @@ async function openfp(browserPath: string) {
 
   const browser = await puppeteer.launch(launchOptions);
 
-  setInterval(async () => {
+  // 浏览器关闭监测
+  const timer = setInterval(async () => {
     const pages = await browser.pages();
     if (pages.length < 1) {
+      clearInterval(timer);
       await browser.close();
       process.exit(0);
     }
